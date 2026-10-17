@@ -1,0 +1,353 @@
+:root {
+  font-family: Inter, 'Segoe UI', sans-serif;
+  color: #e2e8f0;
+  background: #020817;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(167, 139, 250, 0.2), transparent 35%),
+    linear-gradient(180deg, #020817 0%, #0f172a 60%, #111827 100%);
+}
+
+body {
+  min-height: 100vh;
+}
+
+button, input, textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.locked-wrap {
+  max-width: 560px;
+  margin: 8vh auto 0;
+  padding: 8px 0;
+}
+
+.auth-panel {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 24px;
+  padding: 30px 28px;
+  box-shadow: 0 28px 60px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.auth-panel h1 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #f8fafc;
+  font-size: clamp(1.9rem, 2vw, 2.6rem);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #a78bfa;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.muted {
+  color: #cbd5e1;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 26px;
+  width: 100%;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 9px;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.auth-form input {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: rgba(2, 6, 23, 0.6);
+  color: #f8fafc;
+  outline: none;
+}
+
+.auth-form input:focus {
+  border-color: rgba(167, 139, 250, 0.9);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+}
+
+.action-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.danger-btn:hover {
+  transform: translateY(-1px);
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  color: white;
+}
+
+.secondary-btn {
+  background: rgba(148, 163, 184, 0.12);
+  color: #f8fafc;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.danger-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+}
+
+.full-width {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.error-message {
+  margin-top: 16px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.28);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.recovery-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.recovery-box {
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  background: rgba(15, 23, 42, 0.82);
+  border-radius: 14px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+
+.recovery-box code {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #f8fafc;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  letter-spacing: 0.08em;
+}
+
+.recovery-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e2e8f0;
+}
+
+.save-check input {
+  width: 18px;
+  height: 18px;
+}
+
+.journal-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  min-height: calc(100vh - 64px);
+}
+
+.entry-list {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  padding: 18px 14px;
+  min-height: 540px;
+  min-width: 0;
+}
+
+.entry-list ul {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.entry-list li button {
+  width: 100%;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid transparent;
+  color: #e2e8f0;
+  padding: 12px 12px;
+  border-radius: 12px;
+}
+
+.entry-list li.active button {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(168, 85, 247, 0.45);
+}
+
+.editor-panel {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 22px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 540px;
+  min-width: 0;
+  width: 100%;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.editor-header h2 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.editor-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 1;
+}
+
+.editor-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.title-input {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.6);
+  color: #f8fafc;
+  padding: 12px 14px;
+  font-size: 1.1rem;
+}
+
+.editor-body {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 16px;
+  background: rgba(2, 6, 23, 0.6);
+  color: #f8fafc;
+  padding: 16px;
+  min-height: 420px;
+}
+
+.editor-empty {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  color: #cbd5e1;
+}
+
+.save-status {
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+}
+
+.save-status[data-status='saving'] {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+}
+
+.save-status[data-status='unsaved'] {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+}
+
+.save-status[data-status='saved'] {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+}
+
+.save-status[data-status='failed'] {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+@media (max-width: 900px) {
+  .journal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell {
+    padding: 18px;
+  }
+}
