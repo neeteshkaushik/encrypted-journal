@@ -282,9 +282,30 @@ button:disabled {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.privacy-hint {
+  margin: -6px 0 0;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
+.title-field,
+.body-field {
+  position: relative;
+  min-width: 0;
+}
+
+.body-field {
+  flex: 1;
+  min-height: 420px;
 }
 
 .title-input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 14px;
   background: rgba(2, 6, 23, 0.6);
@@ -293,8 +314,34 @@ button:disabled {
   font-size: 1.1rem;
 }
 
+.title-mask {
+  position: absolute;
+  z-index: 2;
+  inset: 1px;
+  overflow: hidden;
+  padding: 12px 14px;
+  border-radius: 13px;
+  color: #f8fafc;
+  white-space: pre;
+  pointer-events: none;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.title-input.is-masked {
+  color: transparent;
+  caret-color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.title-input.is-masked::placeholder {
+  color: transparent;
+}
+
 .editor-body {
-  flex: 1;
+  position: relative;
+  z-index: 1;
+  height: 100%;
   width: 100%;
   resize: none;
   border: 1px solid rgba(148, 163, 184, 0.28);
@@ -303,6 +350,39 @@ button:disabled {
   color: #f8fafc;
   padding: 16px;
   min-height: 420px;
+}
+
+.body-mask {
+  position: absolute;
+  z-index: 2;
+  inset: 1px;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 15px;
+  color: #f8fafc;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  pointer-events: none;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  line-height: normal;
+}
+
+.editor-body.is-masked {
+  color: transparent;
+  caret-color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  scrollbar-gutter: stable;
+}
+
+.editor-body.is-masked::placeholder {
+  color: transparent;
+}
+
+.editor-body.is-masked::selection,
+.title-input.is-masked::selection {
+  background: rgba(167, 139, 250, 0.45);
 }
 
 .editor-empty {

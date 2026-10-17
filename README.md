@@ -26,6 +26,7 @@ The build runs `vue-tsc -b` before the Vite production build. Vitest runs specs 
 - Display a generated recovery key once during setup and require confirmation to continue.
 - Unlock an existing vault using its master password.
 - Create, edit, list, autosave, and delete journal entries.
+- Toggle a visual privacy mask while editing: completed text is hidden while the unfinished trailing word remains visible.
 - Lock manually or after five minutes without activity.
 - Store vault metadata and encrypted note records in browser IndexedDB.
 - Change password and recover a vault key through service functions; these flows are not currently exposed in the UI.
@@ -59,6 +60,8 @@ Data and cryptography are separated into layers:
 - Vault metadata includes the salt and the password-/recovery-wrapped vault key. It does not contain the master password or the unwrapped vault key.
 
 Encryption protects persisted note contents, not data while the app is unlocked: plaintext is present in application memory for editing. Browser compromise, malicious extensions, and compromised runtime assets are outside this prototype's protection. Users should keep the recovery key safe; browser storage may be cleared or evicted.
+
+The editor's privacy mode is a visual shoulder-surfing aid, not an encryption feature. It masks completed non-whitespace characters in the rendered editor while preserving whitespace and leaves the trailing word visible only when the text ends in a letter, number, or underscore. The underlying input value remains plaintext in memory, and the editor temporarily uses a monospace font in this mode to keep the visual mask aligned with editable text.
 
 ## Continuing development
 
