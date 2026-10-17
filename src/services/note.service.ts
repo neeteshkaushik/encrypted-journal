@@ -1,5 +1,4 @@
 import { noteRepository } from '../repositories/note.repository'
-import { encryptNotePayload, decryptNotePayload } from './crypto.service'
 import type { EncryptedNoteRecord, NotePayload } from '../types/note'
 
 export async function saveEncryptedNote(
@@ -9,6 +8,7 @@ export async function saveEncryptedNote(
   noteId?: string,
 ): Promise<EncryptedNoteRecord> {
   const resolvedNoteId = noteId ?? crypto.randomUUID()
+  const { encryptNotePayload } = await import('./crypto.service')
   const record = await encryptNotePayload(payload, vaultKey, vaultId, resolvedNoteId)
   await noteRepository.put(record)
   return record
@@ -25,6 +25,7 @@ export async function loadEncryptedNote(
     throw new Error('Note not found')
   }
 
+  const { decryptNotePayload } = await import('./crypto.service')
   return decryptNotePayload(record, vaultKey)
 }
 

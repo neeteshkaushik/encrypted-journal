@@ -1,13 +1,23 @@
-import sodium from 'libsodium-wrappers-sumo'
-
 import type { EncryptedNoteRecord, NotePayload } from '../types/note'
-import type { VaultMetadata, WrappedSecret } from '../types/vault'
+import { SCHEMA_VERSION, type VaultMetadata, type WrappedSecret } from '../types/vault'
 
-export const SCHEMA_VERSION = 1 as const
+export { SCHEMA_VERSION }
 export const ARGON2ID_ALGORITHM = 'argon2id13' as const
 
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
+let sodiumPromise: ReturnType<typeof loadSodium> | undefined
+
+async function loadSodium() {
+  const { default: sodium } = await import('libsodium-wrappers-sumo')
+  await sodium.ready
+  return sodium
+}
+
+async function getSodium() {
+  sodiumPromise ??= loadSodium()
+  return sodiumPromise
+}
 
 function normalizeBytes(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
   const normalized = new Uint8Array(bytes.length)
@@ -34,7 +44,7 @@ export function base64ToBytes(value: string): Uint8Array<ArrayBuffer> {
 }
 
 export async function ensureSodiumReady(): Promise<void> {
-  await sodium.ready
+  await getSodium()
 }
 
 export async function generateVaultKey(): Promise<Uint8Array> {
@@ -46,7 +56,7 @@ export async function generateRecoveryKeyBytes(): Promise<Uint8Array> {
 }
 
 export async function deriveArgon2idKey(password: string, salt: Uint8Array): Promise<Uint8Array> {
-  await ensureSodiumReady()
+  const sodium = await getSodium()
 
   const derived = sodium.crypto_pwhash(
     32,
@@ -209,6 +219,7 @@ export async function createVaultMetadata(
   masterPassword: string,
   recoveryKeyOverride?: Uint8Array,
 ): Promise<VaultMetadata> {
+  const sodium = await getSodium()
   const salt = generateRandomBytes(sodium.crypto_pwhash_SALTBYTES)
   const vaultKey = await generateVaultKey()
   const passwordKey = await deriveArgon2idKey(masterPassword, salt)

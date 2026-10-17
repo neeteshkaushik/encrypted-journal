@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../src/db'
 import { noteRepository } from '../../src/repositories/note.repository'
 import { vaultRepository } from '../../src/repositories/vault.repository'
-import { changePassword, createVault, recoverVault, unlockVault } from '../../src/services/vault.service'
+import {
+  changePassword,
+  createVault,
+  recoverVault,
+  recoverVaultWithNewPassword,
+  unlockVault,
+} from '../../src/services/vault.service'
 import { saveEncryptedNote, loadEncryptedNote } from '../../src/services/note.service'
 
 describe('vault lifecycle', () => {
@@ -46,6 +52,31 @@ describe('vault lifecycle', () => {
 
     expect(unlockedKey).toEqual(result.vaultKey)
     expect(updatedVault.salt).not.toBe(result.vault.salt)
+  })
+
+  it('recovers a vault and sets a new password without changing the vault key or recovery key', async () => {
+    const originalPassword = 'original-password'
+    const nextPassword = 'recovered-password'
+    const result = await createVault(originalPassword)
+    const recoveryKeyHex = Array.from(result.recoveryKey)
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+
+    const recovered = await recoverVaultWithNewPassword(result.vault.vaultId, recoveryKeyHex, nextPassword)
+
+    expect(recovered.vaultKey).toEqual(result.vaultKey)
+    await expect(unlockVault(result.vault.vaultId, originalPassword)).rejects.toThrow()
+    await expect(unlockVault(result.vault.vaultId, nextPassword)).resolves.toEqual(result.vaultKey)
+    await expect(recoverVault(result.vault.vaultId, result.recoveryKey)).resolves.toEqual(result.vaultKey)
+  })
+
+  it('rejects malformed recovery keys without changing the password', async () => {
+    const result = await createVault('original-password')
+
+    await expect(
+      recoverVaultWithNewPassword(result.vault.vaultId, 'not-a-recovery-key', 'new-password'),
+    ).rejects.toThrow('64 hexadecimal characters')
+    await expect(unlockVault(result.vault.vaultId, 'original-password')).resolves.toEqual(result.vaultKey)
   })
 
   it('stores encrypted notes in the database without plaintext leakage', async () => {

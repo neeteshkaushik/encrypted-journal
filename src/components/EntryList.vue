@@ -9,6 +9,7 @@ interface NoteListItem {
 const props = defineProps<{
   notes: NoteListItem[]
   selectedNoteId: string | null
+  disabled: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,11 +20,11 @@ const emit = defineEmits<{
 
 <template>
   <aside class="entry-list">
-    <button class="primary-btn" type="button" @click="emit('create')">New note</button>
+    <button class="primary-btn" type="button" :disabled="props.disabled" @click="emit('create')">New note</button>
 
     <ul v-if="props.notes.length">
       <li v-for="note in props.notes" :key="note.id" :class="{ active: note.id === props.selectedNoteId }">
-        <button type="button" @click="emit('select', note.id)">
+        <button type="button" :disabled="props.disabled" @click="emit('select', note.id)">
           {{ note.payload.title || 'Untitled note' }}
         </button>
       </li>

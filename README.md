@@ -16,9 +16,10 @@ Vite prints the local development URL when it starts. Useful validation commands
 ```sh
 pnpm test
 pnpm build
+pnpm test:e2e
 ```
 
-The build runs `vue-tsc -b` before the Vite production build. Vitest runs specs under `tests/**/*.spec.ts` in jsdom.
+The build runs `vue-tsc -b` before the Vite production build. Vitest runs specs under `tests/**/*.spec.ts` in jsdom. Playwright end-to-end tests use Chromium and run against a dedicated Vite server on port 4174. Install its browser once with `pnpm exec playwright install chromium`.
 
 ## Current functionality
 
@@ -29,9 +30,12 @@ The build runs `vue-tsc -b` before the Vite production build. Vitest runs specs 
 - Toggle a visual privacy mask while editing: completed text is hidden while the unfinished trailing word remains visible.
 - Lock manually or after five minutes without activity.
 - Store vault metadata and encrypted note records in browser IndexedDB.
-- Change password and recover a vault key through service functions; these flows are not currently exposed in the UI.
+- Export a versioned JSON backup containing the vault metadata and encrypted note records; restore it into a browser profile where that vault is not already present.
+- Change the master password from the unlocked journal after verifying the current password.
+- Recover a vault from its recovery key and set a new master password from the locked screen.
+- Show storage durability and recovery guidance on both locked and unlocked screens.
 
-The current interface assumes a single vault for normal use. Encrypted backup export/import, cross-browser restore, and a complete recovery UI are not implemented.
+The current interface is designed around one active vault at a time. Imported vaults are added without replacing local vaults; the recovery form lets the user select a local vault. On small screens the note list becomes a compact scrollable panel above the editor.
 
 ## Architecture
 
@@ -42,12 +46,15 @@ Data and cryptography are separated into layers:
 - `src/services/crypto.service.ts`: key derivation, AES-GCM encryption/decryption, key wrapping, AAD construction, and schema checks.
 - `src/services/vault.service.ts`: vault creation, unlock, recovery, and password rotation.
 - `src/services/note.service.ts`: encrypt/decrypt and CRUD operations for notes.
+- `src/services/backup.service.ts`: versioned encrypted backup serialization, validation, and atomic restore.
 - `src/repositories/`: persistence access through Dexie.
 - `src/db.ts`: IndexedDB database named `encrypted-journal-db`, with `vaults` and `notes` tables.
 - `src/stores/vault.store.ts`: in-memory UI state indicating whether a vault is unlocked.
 - `src/types/`: persisted vault and encrypted-note shapes.
 - `tests/unit/crypto.service.spec.ts`: cryptographic behavior tests.
+- `tests/integration/backup-flow.spec.ts`: backup export, validation, collision handling, and restore tests.
 - `tests/integration/vault-flow.spec.ts`: vault and persistence integration tests.
+- `tests/e2e/journal.e2e.ts`: browser flows for setup, autosave, lock/unlock, password change, recovery, and backup restore.
 
 ### Encryption and stored data
 
@@ -63,6 +70,10 @@ Encryption protects persisted note contents, not data while the app is unlocked:
 
 The editor's privacy mode is a visual shoulder-surfing aid, not an encryption feature. It masks completed non-whitespace characters in the rendered editor while preserving whitespace and leaves the trailing word visible only when the text ends in a letter, number, or underscore. The underlying input value remains plaintext in memory, and the editor temporarily uses a monospace font in this mode to keep the visual mask aligned with editable text.
 
+### Backups
+
+Use **Export backup** while unlocked to save a JSON file containing the vault's wrapped key metadata and encrypted note records. The current unsaved draft is flushed before export. Restore is available on the locked screen; it validates the backup format and record structure, then adds the vault and notes in one IndexedDB transaction. It will not overwrite an existing vault or note ID. After restoring, unlock with the original master password. Keep backup files private and store them separately from the browser profile; they contain encrypted content but are not separately password-encrypted.
+
 ## Continuing development
 
 Keep changes aligned with these project constraints:
@@ -75,16 +86,13 @@ Keep changes aligned with these project constraints:
 
 Suggested next work, roughly in priority order:
 
-1. Harden autosave and lock behavior: flush or safely cancel pending writes, prevent stale async saves from overwriting newer drafts, and make failures recoverable/visible.
-2. Implement a versioned encrypted backup export/import flow and test restoration into an empty IndexedDB database.
-3. Add UI for recovery and password change, including input validation and clear failure states.
-4. Add browser-level end-to-end tests for vault setup/unlock, editing/autosave, lock, and backup restore.
-5. Improve responsive journal/editor UX and explain storage durability and recovery limitations in-product.
-6. Review dependency/bundle size and obtain an independent security review before treating the app as production-ready.
+1. Review dependency/bundle size and obtain an independent security review before treating the app as production-ready.
 
 ## Known implementation notes
 
 - The Argon2id implementation uses `libsodium-wrappers-sumo`; the base wrapper does not provide the required password-hashing API.
+- Crypto code is loaded on demand instead of in the initial application bundle. Current production output is approximately 199 kB for the initial JavaScript (69 kB gzip) and 534 kB for the separately loaded libsodium chunk (189 kB gzip). Vite still warns about that deferred chunk exceeding its 500 kB threshold; replacing or weakening the Argon2id implementation solely to silence the warning is not recommended without a security review.
+- The unused `libsodium-wrappers` base package was removed; Argon2id requires the sumo package.
 - `unlockAnyVault` tries stored vaults in turn, which is adequate for the current single-vault UI but should be revisited for multi-vault support and explicit error handling.
-- Inactivity lock currently uses a five-minute timeout. Test changes to lock/autosave behavior carefully to avoid losing an edited draft.
+- Inactivity lock currently uses a five-minute timeout. Pending autosaves are serialized and flushed before locking, changing notes, creating notes, or deleting a note. Failed writes keep the draft open and show an error rather than discarding it.
 - There is no backend or account synchronization; data is local to the browser profile.

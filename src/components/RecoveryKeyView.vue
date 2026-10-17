@@ -5,12 +5,14 @@ const props = defineProps<{ recoveryKey: string }>()
 const emit = defineEmits<{ confirm: [] }>()
 
 const isSaved = ref(false)
+const copyStatus = ref<'idle' | 'copied' | 'failed'>('idle')
 
 async function copyKey() {
   try {
     await navigator.clipboard.writeText(props.recoveryKey)
+    copyStatus.value = 'copied'
   } catch {
-    // Clipboard access can fail in some browser contexts; the key is still visible on screen.
+    copyStatus.value = 'failed'
   }
 }
 </script>
@@ -28,8 +30,14 @@ async function copyKey() {
     </div>
 
     <div class="recovery-actions">
-      <button type="button" class="secondary-btn" @click="copyKey">Copy key</button>
+      <button type="button" class="secondary-btn" @click="copyKey">
+        {{ copyStatus === 'copied' ? 'Copied!' : copyStatus === 'failed' ? 'Try copying again' : 'Copy key' }}
+      </button>
     </div>
+    <p v-if="copyStatus === 'copied'" class="copy-feedback" role="status">Recovery key copied to clipboard.</p>
+    <p v-else-if="copyStatus === 'failed'" class="copy-feedback copy-feedback-error" role="status">
+      Could not access the clipboard. Select the key above and copy it manually.
+    </p>
 
     <label class="save-check">
       <input v-model="isSaved" type="checkbox" />

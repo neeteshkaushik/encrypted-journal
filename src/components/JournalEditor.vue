@@ -6,6 +6,7 @@ import { maskCompletedWords } from '../utils/maskText'
 
 const props = defineProps<{
   draft: NotePayload | null
+  disabled: boolean
 }>()
 
 const emit = defineEmits<{
@@ -54,12 +55,13 @@ function togglePrivacyMode() {
         class="secondary-btn"
         type="button"
         :aria-pressed="privacyMode"
+        :disabled="props.disabled"
         @click="togglePrivacyMode"
       >
         {{ privacyMode ? 'Show all text' : 'Privacy mode' }}
       </button>
-      <button class="secondary-btn" type="button" @click="emit('lock')">Lock</button>
-      <button class="danger-btn" type="button" @click="emit('delete')">Delete</button>
+      <button class="secondary-btn" type="button" :disabled="props.disabled" @click="emit('lock')">Lock</button>
+      <button class="danger-btn" type="button" :disabled="props.disabled" @click="emit('delete')">Delete</button>
     </div>
 
     <p v-if="privacyMode" class="privacy-hint">
@@ -76,6 +78,7 @@ function togglePrivacyMode() {
         type="text"
         class="title-input"
         :class="{ 'is-masked': privacyMode }"
+        :disabled="props.disabled"
         :placeholder="privacyMode ? '' : 'Untitled note'"
         :aria-label="privacyMode ? 'Journal title, privacy mask enabled' : 'Journal title'"
         @input="updateField('title', ($event.target as HTMLInputElement).value)"
@@ -92,6 +95,7 @@ function togglePrivacyMode() {
         :value="props.draft.body"
         class="editor-body"
         :class="{ 'is-masked': privacyMode }"
+        :disabled="props.disabled"
         :placeholder="privacyMode ? '' : 'Write something private...'"
         :aria-label="privacyMode ? 'Journal text, privacy mask enabled' : 'Journal text'"
         @input="updateField('body', ($event.target as HTMLTextAreaElement).value)"

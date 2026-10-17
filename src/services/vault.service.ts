@@ -1,13 +1,3 @@
-import {
-  base64ToBytes,
-  bytesToBase64,
-  createVaultMetadata,
-  deriveArgon2idKey,
-  generateRandomBytes,
-  generateRecoveryKeyBytes,
-  unwrapSecret,
-  wrapSecret,
-} from './crypto.service'
 import { vaultRepository } from '../repositories/vault.repository'
 import type { VaultRecord } from '../types/vault'
 
@@ -22,6 +12,13 @@ function nowIso(): string {
 }
 
 export async function createVault(password: string): Promise<VaultSetupResult> {
+  const {
+    base64ToBytes,
+    createVaultMetadata,
+    deriveArgon2idKey,
+    generateRecoveryKeyBytes,
+    unwrapSecret,
+  } = await import('./crypto.service')
   const vaultId = crypto.randomUUID()
   const recoveryKey = await generateRecoveryKeyBytes()
   const vaultMetadata = await createVaultMetadata(vaultId, password, recoveryKey)
@@ -47,6 +44,7 @@ export async function createVault(password: string): Promise<VaultSetupResult> {
 }
 
 export async function unlockVault(vaultId: string, password: string): Promise<Uint8Array> {
+  const { base64ToBytes, deriveArgon2idKey, unwrapSecret } = await import('./crypto.service')
   const record = await vaultRepository.get(vaultId)
 
   if (!record) {
@@ -74,6 +72,7 @@ export async function unlockAnyVault(password: string): Promise<{ vault: VaultRe
 }
 
 export async function recoverVault(vaultId: string, recoveryKey: Uint8Array): Promise<Uint8Array> {
+  const { unwrapSecret } = await import('./crypto.service')
   const record = await vaultRepository.get(vaultId)
 
   if (!record) {
@@ -84,6 +83,7 @@ export async function recoverVault(vaultId: string, recoveryKey: Uint8Array): Pr
 }
 
 export async function changePassword(vaultId: string, currentPassword: string, nextPassword: string): Promise<VaultRecord> {
+  const { bytesToBase64, deriveArgon2idKey, generateRandomBytes, wrapSecret } = await import('./crypto.service')
   const record = await vaultRepository.get(vaultId)
 
   if (!record) {
@@ -106,6 +106,45 @@ export async function changePassword(vaultId: string, currentPassword: string, n
 
   await vaultRepository.update(vaultId, updated)
   return updated
+}
+
+export async function recoverVaultWithNewPassword(
+  vaultId: string,
+  recoveryKeyHex: string,
+  nextPassword: string,
+): Promise<{ vault: VaultRecord; vaultKey: Uint8Array }> {
+  if (!/^[0-9a-fA-F]{64}$/.test(recoveryKeyHex)) {
+    throw new Error('Recovery key must contain exactly 64 hexadecimal characters')
+  }
+
+  const { bytesToBase64, deriveArgon2idKey, generateRandomBytes, wrapSecret } = await import('./crypto.service')
+  const recoveryKey = Uint8Array.from(
+    recoveryKeyHex.match(/.{2}/g) ?? [],
+    (byte) => Number.parseInt(byte, 16),
+  )
+  const vaultKey = await recoverVault(vaultId, recoveryKey)
+  const record = await vaultRepository.get(vaultId)
+
+  if (!record) {
+    throw new Error('Vault not found')
+  }
+
+  const salt = generateRandomBytes(16)
+  const passwordKey = await deriveArgon2idKey(nextPassword, salt)
+  const passwordWrappedKey = await wrapSecret(vaultKey, passwordKey, vaultId)
+  const updated: VaultRecord = {
+    ...record,
+    salt: bytesToBase64(salt),
+    passwordWrappedKey,
+    updatedAt: nowIso(),
+  }
+
+  await vaultRepository.update(vaultId, updated)
+  return { vault: updated, vaultKey }
+}
+
+export async function listVaults(): Promise<VaultRecord[]> {
+  return vaultRepository.list()
 }
 
 export async function getVault(vaultId: string): Promise<VaultRecord | undefined> {
