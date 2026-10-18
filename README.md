@@ -33,9 +33,19 @@ The build runs `vue-tsc -b` before the Vite production build. Vitest runs specs 
 - Export a versioned JSON backup containing the vault metadata and encrypted note records; restore it into a browser profile where that vault is not already present.
 - Change the master password from the unlocked journal after verifying the current password.
 - Recover a vault from its recovery key and set a new master password from the locked screen.
-- Show storage durability and recovery guidance on both locked and unlocked screens.
+- Show browser-storage and recovery guidance in Settings.
 
 The current interface is designed around one active vault at a time. Imported vaults are added without replacing local vaults; the recovery form lets the user select a local vault. On small screens the note list becomes a compact scrollable panel above the editor.
+
+### Optional cross-browser sync
+
+The optional Supabase email/password account UI is connected. Configure the client by setting `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the project-root `.env.local` file. These are public client credentials; never use a service-role or secret key in the browser. If either value is missing/invalid, the sync-account UI is hidden and local journaling continues to work.
+
+Account registration/sign-in is separate from the journal master password and is managed in **Settings**. When signed in, journal saves and deletions automatically sync encrypted data; unlocking a vault also checks for remote changes. In a new browser, open **New browser? Restore or sync** from the unlock screen, sign in to the same sync account, download the encrypted vault metadata, and unlock it with the journal master password. **Sync now** remains available in Settings for a manual check or retry. Sync sends only wrapped vault metadata and AES-GCM-encrypted note records; it never sends plaintext, the unwrapped vault key, the master password, or the recovery key. Local-only use remains available.
+
+The migration stores append-only change records, not plaintext journal fields. Note changes contain the existing encrypted note record; deletions are represented by tombstones. Row-level security scopes reads and inserts to the authenticated account, while update/delete permissions are revoked so concurrent device edits can form separate branches rather than silently replacing each other. When separate branches are detected, the sync client re-encrypts the other branch under a new note ID and keeps both versions as distinct, labeled notes on each device. These conflict copies remain local until edited; subsequent edits sync as independent notes.
+
+Before using sync, apply `supabase/migrations/20261018000100_encrypted_sync.sql` in the Supabase SQL Editor. The migration has not been applied or validated against a live Supabase project. The Supabase service can observe account identity, vault/note IDs, change timing, and encrypted record sizes. Do not add the service-role key to the browser app; the client uses only the project URL and public anon key. Test with non-sensitive journal data first.
 
 ## Architecture
 
@@ -47,8 +57,10 @@ Data and cryptography are separated into layers:
 - `src/services/vault.service.ts`: vault creation, unlock, recovery, and password rotation.
 - `src/services/note.service.ts`: encrypt/decrypt and CRUD operations for notes.
 - `src/services/backup.service.ts`: versioned encrypted backup serialization, validation, and atomic restore.
+- `src/services/supabase.client.ts`: optional Supabase client configuration and email/password auth.
+- `src/services/sync.service.ts`: explicit encrypted change-log sync, remote vault discovery, and branch preservation.
 - `src/repositories/`: persistence access through Dexie.
-- `src/db.ts`: IndexedDB database named `encrypted-journal-db`, with `vaults` and `notes` tables.
+- `src/db.ts`: IndexedDB database named `encrypted-journal-db`, with vault, note, pending-delete, outbox, and sync-state tables.
 - `src/stores/vault.store.ts`: in-memory UI state indicating whether a vault is unlocked.
 - `src/types/`: persisted vault and encrypted-note shapes.
 - `tests/unit/crypto.service.spec.ts`: cryptographic behavior tests.
@@ -72,7 +84,9 @@ The editor's privacy mode is a visual shoulder-surfing aid, not an encryption fe
 
 ### Backups
 
-Use **Export backup** while unlocked to save a JSON file containing the vault's wrapped key metadata and encrypted note records. The current unsaved draft is flushed before export. Restore is available on the locked screen; it validates the backup format and record structure, then adds the vault and notes in one IndexedDB transaction. It will not overwrite an existing vault or note ID. After restoring, unlock with the original master password. Keep backup files private and store them separately from the browser profile; they contain encrypted content but are not separately password-encrypted.
+Use **Settings → Export encrypted backup** while unlocked to save a JSON file containing the vault's wrapped key metadata and encrypted note records. The current unsaved draft is flushed before export. Restore is available in Settings from the unlock screen or the journal; it validates the backup format and record structure, then adds the vault and notes in one IndexedDB transaction. It will not overwrite an existing vault or note ID. After restoring, unlock with the original master password. Keep backup files private and store them separately from the browser profile; they contain encrypted content but are not separately password-encrypted.
+
+Settings reports whether a sync account is connected and displays remote vault records using a generic label and their technical IDs. The current client does not persist a last-successful-sync timestamp or expose a reliable pending-change count, so Settings does not claim either.
 
 ## Continuing development
 
@@ -86,7 +100,8 @@ Keep changes aligned with these project constraints:
 
 Suggested next work, roughly in priority order:
 
-1. Review dependency/bundle size and obtain an independent security review before treating the app as production-ready.
+1. Apply and validate the Supabase migration against a development project, then exercise cross-browser sync and RLS with test data.
+2. Obtain an independent security review before treating the app as production-ready.
 
 ## Known implementation notes
 
@@ -95,4 +110,4 @@ Suggested next work, roughly in priority order:
 - The unused `libsodium-wrappers` base package was removed; Argon2id requires the sumo package.
 - `unlockAnyVault` tries stored vaults in turn, which is adequate for the current single-vault UI but should be revisited for multi-vault support and explicit error handling.
 - Inactivity lock currently uses a five-minute timeout. Pending autosaves are serialized and flushed before locking, changing notes, creating notes, or deleting a note. Failed writes keep the draft open and show an error rather than discarding it.
-- There is no backend or account synchronization; data is local to the browser profile.
+- The Supabase sync migration must be applied separately in a development project before automatic sync or the manual **Sync now** action can exchange data.

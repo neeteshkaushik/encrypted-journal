@@ -17,6 +17,10 @@ describe('vault lifecycle', () => {
   beforeEach(async () => {
     await db.vaults.clear()
     await db.notes.clear()
+    await db.syncNoteStates.clear()
+    await db.syncVaultStates.clear()
+    await db.pendingNoteDeletions.clear()
+    await db.syncOutbox.clear()
   })
 
   it('creates and unlocks a vault with a valid password', async () => {

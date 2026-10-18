@@ -5,17 +5,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const labelMap = {
-  idle: 'Ready',
-  unsaved: 'Unsaved changes',
-  saving: 'Saving',
-  saved: 'Saved',
-  failed: 'Save failed',
-} as const
 </script>
 
 <template>
-  <div class="save-status" :data-status="props.status">
-    {{ labelMap[props.status] }}
+  <div v-if="props.status === 'failed'" class="save-status" role="alert">
+    Could not save changes
   </div>
 </template>

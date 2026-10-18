@@ -11,8 +11,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   updateDraft: [payload: NotePayload]
-  delete: []
-  lock: []
 }>()
 
 const privacyMode = ref(false)
@@ -52,7 +50,7 @@ function togglePrivacyMode() {
   <section v-if="props.draft" class="editor-shell">
     <div class="editor-toolbar">
       <button
-        class="secondary-btn"
+        class="quiet-btn"
         type="button"
         :aria-pressed="privacyMode"
         :disabled="props.disabled"
@@ -60,8 +58,6 @@ function togglePrivacyMode() {
       >
         {{ privacyMode ? 'Show all text' : 'Privacy mode' }}
       </button>
-      <button class="secondary-btn" type="button" :disabled="props.disabled" @click="emit('lock')">Lock</button>
-      <button class="danger-btn" type="button" :disabled="props.disabled" @click="emit('delete')">Delete</button>
     </div>
 
     <p v-if="privacyMode" class="privacy-hint">

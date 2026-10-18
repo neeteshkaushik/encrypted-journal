@@ -4,6 +4,7 @@ import type { NotePayload } from '../types/note'
 interface NoteListItem {
   id: string
   payload: NotePayload
+  isConflictCopy?: boolean
 }
 
 const props = defineProps<{
@@ -25,7 +26,7 @@ const emit = defineEmits<{
     <ul v-if="props.notes.length">
       <li v-for="note in props.notes" :key="note.id" :class="{ active: note.id === props.selectedNoteId }">
         <button type="button" :disabled="props.disabled" @click="emit('select', note.id)">
-          {{ note.payload.title || 'Untitled note' }}
+          {{ note.payload.title || 'Untitled note' }}{{ note.isConflictCopy ? ' (conflict copy)' : '' }}
         </button>
       </li>
     </ul>

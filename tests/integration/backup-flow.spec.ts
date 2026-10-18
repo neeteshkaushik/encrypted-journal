@@ -12,6 +12,10 @@ describe('encrypted backup flow', () => {
   beforeEach(async () => {
     await db.vaults.clear()
     await db.notes.clear()
+    await db.syncNoteStates.clear()
+    await db.syncVaultStates.clear()
+    await db.pendingNoteDeletions.clear()
+    await db.syncOutbox.clear()
   })
 
   it('exports only encrypted note data and restores it into an empty database', async () => {
