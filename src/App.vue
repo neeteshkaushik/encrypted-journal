@@ -190,6 +190,7 @@ async function loadNotesForActiveVault() {
     }),
   )
 
+  decryptedNotes.sort((a, b) => b.payload.createdAt.localeCompare(a.payload.createdAt))
   noteList.value = decryptedNotes
 
   if (!selectedNoteId.value && decryptedNotes.length) {
@@ -558,8 +559,11 @@ function persistDraft(): Promise<boolean> {
           payload,
           isConflictCopy: noteList.value.find((item) => item.id === saved.noteId)?.isConflictCopy,
         }
-        const updatedList = noteList.value.filter((item) => item.id !== saved.noteId)
-        noteList.value = [nextEntry, ...updatedList]
+        const existingIndex = noteList.value.findIndex((item) => item.id === saved.noteId)
+        noteList.value =
+          existingIndex === -1
+            ? [nextEntry, ...noteList.value]
+            : noteList.value.map((item, index) => (index === existingIndex ? nextEntry : item))
       }
 
       if (selectedNoteId.value === noteId && draftVersion === versionAtSave) {
