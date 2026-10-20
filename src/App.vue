@@ -540,7 +540,7 @@ function persistDraft(): Promise<boolean> {
   const versionAtSave = draftVersion
   const payload: NotePayload = {
     ...draftAtSave,
-    title: draftAtSave.title || 'Untitled note',
+    title: draftAtSave.title,
     body: draftAtSave.body || '',
     updatedAt: new Date().toISOString(),
     revision: (draftAtSave.revision ?? 0) + 1,
